@@ -19,7 +19,7 @@ open Minimir
             x = ...;   // We overwrite x. The borrow created above is no longer active,
                        // because x refers to another memory location
             *x = 1;    // Thus, we can access x in writing
-    v}
+    v} 
 
     This module contains an analysis which computes this information. *)
 

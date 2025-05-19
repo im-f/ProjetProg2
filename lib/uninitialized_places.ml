@@ -1,6 +1,6 @@
 (* Once you are done writing the code, remove this directive,
    whose purpose is to disable several warnings. *)
-[@@@warning "-26-27-33"]
+(* [@@@warning "-26-27-33"] *)
 
 (* You should read and understand active_borrows.ml *fully*, before filling the holes
   in this file. The analysis in this file follows the same structure. *)
@@ -59,8 +59,17 @@ let go prog mir : analysis_results =
 
   (* Effect of using (copying or moving) a place [pl] on the abstract state [state]. *)
   let move_or_copy pl state = 
-    match pl with
-    | PlLocal _ -> PlaceSet.(state |> add pl) 
+   let type_pl = typ_of_place prog mir pl in 
+      if (typ_is_copy prog type_pl) then 
+        let sub_pl = Hashtbl.find subplaces pl in 
+        let sub_pl_copy = PlaceSet.for_all 
+                          (fun x -> 
+                            let type_pl =  typ_of_place prog mir x in 
+                            typ_is_copy prog type_pl) sub_pl
+        in
+        if sub_pl_copy then state else deinitialize pl state
+      else 
+        deinitialize pl state
   in
 
   (* These modules are parameters of the [Fix.DataFlow.ForIntSegment] functor below. *)
@@ -81,7 +90,20 @@ let go prog mir : analysis_results =
       go mir.mentry PlaceSet.empty
 
     let foreach_successor lbl state go =
-        
+      match fst mir.minstrs.(lbl) with 
+      | Iassign (pl, RVplace(p), next) -> 
+        let after_cop_mov = move_or_copy p state in
+        go next (initialize pl after_cop_mov)
+      | Iassign (pl, _, next) ->  go next (initialize pl state)
+      | Ideinit (l, next) -> go next (deinitialize (PlLocal l) state)
+      | Igoto next -> go next state
+      | Iif (_, next1, next2) -> 
+        go next1 state; 
+        go next2 state
+      | Ireturn -> ()
+      | Icall(_, _, pl, next) -> 
+        go next (initialize pl state)
+
   end in
   let module Fix = Fix.DataFlow.ForIntSegment (Instrs) (Prop) (Graph) in
   fun i -> Option.value (Fix.solution i) ~default:PlaceSet.empty

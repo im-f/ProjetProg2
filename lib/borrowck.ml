@@ -27,10 +27,6 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
 
   (* Then, we add the outlives relations needed for the instructions to be safe. *)
 
-  Hashtbl.iter
-    (fun _ typ -> )
-    mir.mlocals;
-
   (* TODO: generate these constraints by
        - unifying types that need be equal (note that MiniRust does not support subtyping, that is,
          if a variable x: &'a i32 is used as type &'b i32, then this requires that lifetimes 'a and
@@ -44,6 +40,17 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
 
     SUGGESTION: use functions [typ_of_place], [fields_types_fresh] and [fn_prototype_fresh].
   *)
+
+  (* Hashtbl.iter
+    (fun loc typ -> 
+      let typ_loc = typ_of_place prog mir (PlLocal loc) in 
+      if typ_loc <> typ then 
+        match typ_loc, typ with 
+          Tborrow(lyf1, _, _), Tborrow(lyf2, _, _) -> unify_lft lyf1 lyf2
+        | Tstruct(_, lyf_l1), Tstruct(_, lyf_l2) -> ()
+        | _, _ -> ()
+    )
+    mir.mlocals; *)
 
   (* The [living] variable contains constraints of the form "lifetime 'a should be
     alive at program point p". *)
@@ -125,7 +132,28 @@ let borrowck prog mir =
       (* TODO: check that we never write to shared borrows, and that we never create mutable borrows
         below shared borrows. Function [place_mut] can be used to determine if a place is mutable, i.e., if it
         does not dereference a shared borrow. *)
-      ()
+      
+      let check_mut pl = 
+        match (place_mut prog mir pl) with
+        | NotMut -> Error.error loc "Writing in unmutable place"
+        | Mut -> ()
+      in
+      match instr with
+      | Iassign (pl, RVplace(pl1), _) 
+      | Iassign (pl, RVborrow(_, pl1), _) 
+      | Iassign (pl, RVunop(_, pl1), _)  ->  
+            check_mut pl; 
+            check_mut pl1
+      | Iassign (pl, RVbinop(_, pl1, pl2), _) -> 
+            check_mut pl; 
+            check_mut pl1;
+            check_mut pl2
+      | Iassign (pl, RVmake (_, pls), _) | Icall (_, pls, pl, _) ->
+        check_mut pl;
+        List.iter check_mut pls
+      | Iassign (pl, _, _) | Iif (pl, _, _) -> check_mut pl
+      | Ireturn -> check_mut (PlLocal Lret)
+      | _ -> ()
     )
     mir.minstrs;
 

@@ -97,12 +97,10 @@ let go prog mir : analysis_results =
       | Iassign (pl, _, next) ->  go next (initialize pl state)
       | Ideinit (l, next) -> go next (deinitialize (PlLocal l) state)
       | Igoto next -> go next state
-      | Iif (_, next1, next2) -> 
-        go next1 state; 
-        go next2 state
+      | Iif (_, next1, next2) -> go next1 state; 
+                                 go next2 state
       | Ireturn -> ()
-      | Icall(_, _, pl, next) -> 
-        go next (initialize pl state)
+      | Icall(_, _, pl, next) -> go next (initialize pl state)
 
   end in
   let module Fix = Fix.DataFlow.ForIntSegment (Instrs) (Prop) (Graph) in

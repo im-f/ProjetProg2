@@ -27,6 +27,10 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
 
   (* Then, we add the outlives relations needed for the instructions to be safe. *)
 
+  Hashtbl.iter
+    (fun _ typ -> )
+    mir.mlocals;
+
   (* TODO: generate these constraints by
        - unifying types that need be equal (note that MiniRust does not support subtyping, that is,
          if a variable x: &'a i32 is used as type &'b i32, then this requires that lifetimes 'a and

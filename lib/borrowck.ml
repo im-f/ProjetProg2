@@ -41,28 +41,55 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
     SUGGESTION: use functions [typ_of_place], [fields_types_fresh] and [fn_prototype_fresh].
   *)
 
-  let rec constraint_eq typ1 typ2 = 
-    match typ1, typ2 with 
-      Tborrow (lyf1, _, _), Tborrow (lyf2, _, _) -> unify_lft lyf1 lyf2
-    | Tstruct (s1, _), Tstruct (s2, _) -> 
-      let (struct_lyf1, _) = fields_types_fresh prog s1 in let (struct_lyf2, _) = fields_types_fresh prog s2 in
-      List.iter2 constraint_eq struct_lyf1 struct_lyf2
-    | _, _ -> ()
-  in
   Hashtbl.iter
     (fun loc typ -> 
       let typ_loc = typ_of_place prog mir (PlLocal loc) in  
-        constraint_eq typ_loc typ
+        match typ, typ_loc with 
+        Tborrow (lyf1, _, _), Tborrow (lyf2, _, _) -> unify_lft lyf1 lyf2
+      | Tstruct (_, struct_lyf1), Tstruct (_, struct_lyf2) -> 
+        List.iter2 unify_lft struct_lyf1 struct_lyf2
+      | _, _ -> ()
     )
     mir.mlocals;
 
-  outlives := outlives_union !outlives mir.moutlives_graph;
-
+  let outlives_typ typ1 typ2 = 
+    match typ1, typ2 with 
+    | Tborrow (lyf1, _, _), Tborrow (lyf2, _, _) -> add_outlives (lyf1, lyf2)
+    | Tstruct (s1, _), Tstruct (s2, _) -> 
+      let (_, typ) = fields_types_fresh prog s1 in let (_, typp) = fields_types_fresh prog s2 in
+      (
+        match typ, typp with 
+        | Tstruct(_, lyf1), Tstruct(_, lyf2) -> List.iter2 (fun x1 x2 -> add_outlives (x1, x2)) lyf1 lyf2
+        | _ -> ()
+      )
+    | Tborrow (lyf, _, _), Tstruct (s, _) -> 
+      let (_, typ) = fields_types_fresh prog s in
+      (
+        match typ with 
+        | Tstruct (_, lyf1) -> List.iter (fun x -> add_outlives (lyf, x)) lyf1
+        | _ -> ()
+      )
+    | Tstruct (s, _), Tborrow (lyf, _, _) -> 
+      let (_, typ) = fields_types_fresh prog s in
+      (
+        match typ with 
+        | Tstruct (_, lyf1) -> List.iter (fun x -> add_outlives (x, lyf)) lyf1
+        | _ -> ()
+      )
+    | _ -> ()
+  in 
   Array.iter 
     (
       fun (instr, _) -> 
         match instr with
-        | Iassign (_, RVborrow (), _)
+        | Icall (s, pl_l, pl, _) -> 
+          let (_, _, typ_fn) = fn_prototype_fresh prog s in 
+          List.iter (fun x -> add_outlives x) typ_fn
+        | Iassign (pl, RVborrow(_, pl_borrow), _) -> 
+          if (contains_deref_borrow pl) then 
+            let typ1 = typ_of_place prog mir pl in let typ2 = typ_of_place prog mir pl_borrow in 
+            outlives_typ typ1 typ2
+        | _ -> ()
     ) 
     mir.minstrs;
 
@@ -92,6 +119,34 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
 
   (* If [lft] is a generic lifetime, [lft] is always alive at [PpInCaller lft]. *)
   List.iter (fun lft -> add_living (PpInCaller lft) lft) mir.mgeneric_lfts;
+
+  Array.iteri 
+    (fun lbl (instr, _) -> 
+
+      let livelocinit = live_locals lbl in 
+
+      let free_alive_lft typ lft = 
+        let free_lft_typ = free_lfts typ in 
+        if LSet.mem lft free_lft_typ then 
+           add_living (PpLocal(lbl)) lft
+      in
+      match instr with 
+      | Iassign (pl, _, _) | Icall (_, _, pl, _) -> 
+      (
+        let loc_pl = local_of_place pl in
+
+        if LocSet.mem loc_pl livelocinit then 
+          let typ_pl = typ_of_place prog mir pl in 
+          match typ_pl with 
+          | Tborrow (lft, _, _) -> free_alive_lft typ_pl lft
+          | Tstruct (_, lft_l) -> 
+            List.iter (fun x -> free_alive_lft typ_pl x) lft_l
+          | _ -> ()
+      )
+      | _ -> ()
+
+    ) 
+    mir.minstrs;
 
   (* Now, we compute lifetime sets by finding the smallest solution of the constraints, using the
     Fix library. *)

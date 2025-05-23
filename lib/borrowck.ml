@@ -123,6 +123,8 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
   Array.iteri 
     (fun lbl (instr, _) -> 
 
+      List.iter (fun lft -> add_living (PpLocal lbl) lft) mir.mgeneric_lfts;
+
       let livelocinit = live_locals lbl in 
 
       let free_alive_lft typ lft = 

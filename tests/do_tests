@@ -7,6 +7,9 @@ then
     exit 1
 fi
 
+total=0
+shouldNot=0
+should=0
 for f in *.rs
 do
     echo Running test $f...
@@ -22,6 +25,8 @@ do
     then
         if [[ $ret != 1 ]]
         then
+          total=$((total+1))
+          should=$((should+1))
           echo Test $f: should return an error, but minirust returned code $ret.
         fi
 
@@ -32,6 +37,8 @@ do
     else
         if [[ $ret != 0 ]]
         then
+          total=$((total+1))
+          shouldNot=$((shouldNot+1))
           echo Test $f: should not return an error, but minirust returned code $ret.
         fi
 
@@ -39,5 +46,11 @@ do
         then
           echo Test $f: should not return an error, but *rustc* returned code $retrust.
         fi
-    fi
+    fi 
 done
+
+echo
+echo Failed Tests : $total out of 94.
+echo Should have returned errors : $should.
+echo Should not have returned errors : $shouldNot.
+echo

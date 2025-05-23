@@ -41,16 +41,30 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
     SUGGESTION: use functions [typ_of_place], [fields_types_fresh] and [fn_prototype_fresh].
   *)
 
-  (* Hashtbl.iter
+  let rec constraint_eq typ1 typ2 = 
+    match typ1, typ2 with 
+      Tborrow (lyf1, _, _), Tborrow (lyf2, _, _) -> unify_lft lyf1 lyf2
+    | Tstruct (s1, _), Tstruct (s2, _) -> 
+      let (struct_lyf1, _) = fields_types_fresh prog s1 in let (struct_lyf2, _) = fields_types_fresh prog s2 in
+      List.iter2 constraint_eq struct_lyf1 struct_lyf2
+    | _, _ -> ()
+  in
+  Hashtbl.iter
     (fun loc typ -> 
-      let typ_loc = typ_of_place prog mir (PlLocal loc) in 
-      if typ_loc <> typ then 
-        match typ_loc, typ with 
-          Tborrow(lyf1, _, _), Tborrow(lyf2, _, _) -> unify_lft lyf1 lyf2
-        | Tstruct(_, lyf_l1), Tstruct(_, lyf_l2) -> ()
-        | _, _ -> ()
+      let typ_loc = typ_of_place prog mir (PlLocal loc) in  
+        constraint_eq typ_loc typ
     )
-    mir.mlocals; *)
+    mir.mlocals;
+
+  outlives := outlives_union !outlives mir.moutlives_graph;
+
+  Array.iter 
+    (
+      fun (instr, _) -> 
+        match instr with
+        | Iassign (_, RVborrow (), _)
+    ) 
+    mir.minstrs;
 
   (* The [living] variable contains constraints of the form "lifetime 'a should be
     alive at program point p". *)
@@ -139,15 +153,13 @@ let borrowck prog mir =
         | Mut -> ()
       in
       match instr with
-      | Iassign (pl, RVplace(pl1), _) 
-      | Iassign (pl, RVborrow(_, pl1), _) 
-      | Iassign (pl, RVunop(_, pl1), _)  ->  
+      | Iassign (pl, RVborrow(mut, pl1), _)  ->  
+        check_mut pl;
             check_mut pl; 
-            check_mut pl1
-      | Iassign (pl, RVbinop(_, pl1, pl2), _) -> 
-            check_mut pl; 
-            check_mut pl1;
-            check_mut pl2
+        check_mut pl;
+        (match mut with 
+        | Mut -> ()
+        | NotMut -> Error.error loc "Unmutable borrow")
       | Iassign (pl, RVmake (_, pls), _) | Icall (_, pls, pl, _) ->
         check_mut pl;
         List.iter check_mut pls

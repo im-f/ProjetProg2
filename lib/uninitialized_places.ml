@@ -100,9 +100,7 @@ let go prog mir : analysis_results =
       | Iif (_, next1, next2) -> go next1 state; 
                                  go next2 state
       | Ireturn -> ()
-      | Icall(_, pl_l, res, next) -> 
-        let state_init = List.fold_left (fun acc x -> deinitialize x acc) state pl_l in
-        go next (initialize res state_init)
+      | Icall(_, _, res, next) -> go next (initialize res state)
 
   end in
   let module Fix = Fix.DataFlow.ForIntSegment (Instrs) (Prop) (Graph) in

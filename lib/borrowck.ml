@@ -212,8 +212,6 @@ let borrowck prog mir =
       match instr with
       | Iassign (pl, RVborrow(mut, pl1), _)  ->  
         check_mut pl;
-            check_mut pl; 
-        check_mut pl;
         (match mut with 
         | Mut -> ()
         | NotMut -> Error.error loc "Unmutable borrow")
@@ -232,6 +230,19 @@ let borrowck prog mir =
     enough to ensure safety. I.e., if [lft_sets lft] contains program point [PpInCaller lft'], this
     means that we need that [lft] be alive when [lft'] dies, i.e., [lft'] outlives [lft]. This relation
     has to be declared in [mir.outlives_graph]. *)
+
+  LMap.iter 
+    (
+      fun k v -> 
+
+        let k_lft_set = lft_sets k in 
+        PpSet.iter 
+          ( fun pp -> 
+              match pp with 
+              | PpInCaller l -> let _test =  LSet.find l v in ()
+              | _ -> ()
+          ) k_lft_set;
+    ) mir.moutlives_graph;
 
   (* We check that we never perform any operation which would conflict with an existing
     borrows. *)
@@ -306,7 +317,12 @@ let borrowck prog mir =
       in
 
       match instr with
-      | Iassign (_, RVunop (_, pl), _) -> check_use pl
+      | Iassign (_, RVunop (_, pl), _) 
+      | Iassign (_, RVplace(pl), _) -> check_use pl
+      | Iassign (_, RVbinop (_, pl, pl1), _) -> 
+        check_use pl; check_use pl1
+      | Icall (_, pl_l, _, _)
+      | Iassign (_, RVmake (_, pl_l), _) -> List.iter check_use pl_l  
       | Iassign (_, RVborrow (mut, pl), _) ->
           if conflicting_borrow (mut = Mut) pl then
             Error.error loc "There is a borrow conflicting this borrow."

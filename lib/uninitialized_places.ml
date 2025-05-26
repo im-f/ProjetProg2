@@ -90,17 +90,38 @@ let go prog mir : analysis_results =
       go mir.mentry PlaceSet.empty
 
     let foreach_successor lbl state go =
+
+      let subplaces_no_ref = Hashtbl.create 7 in
+      let () =
+        PlaceSet.iter
+          (fun pl ->
+            let pls = PlaceSet.filter (fun pl_sub -> (is_subplace_no_deref pl_sub pl) && pl_sub != pl) all_places in
+            Hashtbl.add subplaces pl pls)
+          all_places
+      in
+      let is_subplace_gen pl = 
+        match Hashtbl.find_opt subplaces_no_ref pl with
+        | None -> false
+        | Some _ -> true
+      in
       match fst mir.minstrs.(lbl) with 
       | Iassign (pl, RVplace(p), next) -> 
         let after_cop_mov = move_or_copy p state in
-        go next (initialize pl after_cop_mov)
-      | Iassign (pl, _, next) ->  go next (initialize pl state)
+        if not (is_subplace_gen pl) || not (PlaceSet.mem pl state) then
+          go next (initialize pl after_cop_mov)
+        else 
+          go next (deinitialize pl state)
+      | Iassign (pl, _, next) ->  
+        if not (is_subplace_gen pl) || not (PlaceSet.mem pl state) then
+          go next (initialize pl state)
+        else 
+          go next (deinitialize pl state)
       | Ideinit (l, next) -> go next (deinitialize (PlLocal l) state)
       | Igoto next -> go next state
       | Iif (_, next1, next2) -> go next1 state; 
                                  go next2 state
       | Ireturn -> ()
-      | Icall(_, _, res, next) -> go next (initialize res state)
+      | Icall(_, _, res, next) ->  go next (initialize res state)
 
   end in
   let module Fix = Fix.DataFlow.ForIntSegment (Instrs) (Prop) (Graph) in

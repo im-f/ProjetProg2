@@ -82,7 +82,7 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
     (
       fun (instr, _) -> 
         match instr with
-        | Icall (s, pl_l, pl, _) -> 
+        | Icall (s, _, _, _) -> 
           let (_, _, typ_fn) = fn_prototype_fresh prog s in 
           List.iter (fun x -> add_outlives x) typ_fn
         | Iassign (pl, RVborrow(_, pl_borrow), _) -> 
@@ -203,18 +203,18 @@ let borrowck prog mir =
       (* TODO: check that we never write to shared borrows, and that we never create mutable borrows
         below shared borrows. Function [place_mut] can be used to determine if a place is mutable, i.e., if it
         does not dereference a shared borrow. *)
-      
       let check_mut pl = 
         match (place_mut prog mir pl) with
         | NotMut -> Error.error loc "Writing in unmutable place"
         | Mut -> ()
       in
       match instr with
-      | Iassign (pl, RVborrow(mut, pl1), _)  ->  
-        check_mut pl;
-        (match mut with 
-        | Mut -> ()
-        | NotMut -> Error.error loc "Unmutable borrow")
+      | Iassign (pl, RVborrow(mut, pl1), _)  ->  (
+          check_mut pl;
+          match mut with 
+          | Mut -> check_mut pl1
+          | NotMut -> ()
+        )
       | Iassign (pl, RVmake (_, pls), _) | Icall (_, pls, pl, _) ->
         check_mut pl;
         List.iter check_mut pls

@@ -232,9 +232,7 @@ let borrowck prog mir =
     has to be declared in [mir.outlives_graph]. *)
 
   LMap.iter 
-    (
-      fun k v -> 
-
+    (fun k v -> 
         let k_lft_set = lft_sets k in 
         PpSet.iter 
           ( fun pp -> 

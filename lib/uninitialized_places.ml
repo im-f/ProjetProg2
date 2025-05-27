@@ -100,7 +100,9 @@ let go prog mir : analysis_results =
       | Iif (_, next1, next2) -> go next1 state; 
                                  go next2 state
       | Ireturn -> ()
-      | Icall(_, _, res, next) ->  go next (initialize res state)
+      | Icall(_, arg, res, next) ->  
+        let state_aft = List.fold_left (fun acc x -> move_or_copy x acc) state arg in 
+        go next (initialize res state_aft)
   end in
   let module Fix = Fix.DataFlow.ForIntSegment (Instrs) (Prop) (Graph) in
   fun i -> Option.value (Fix.solution i) ~default:PlaceSet.empty

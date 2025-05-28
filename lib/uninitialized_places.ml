@@ -87,7 +87,13 @@ let go prog mir : analysis_results =
       similar data flow analysis. *)
 
     let foreach_root go =
-      go mir.mentry PlaceSet.empty
+      let start = PlaceSet.filter 
+      (
+        fun x -> match (local_of_place x) with 
+                | Lvar _ -> true
+                | _ -> false
+      ) all_places in
+      go mir.mentry start
 
     let foreach_successor lbl state go =
       match fst mir.minstrs.(lbl) with 

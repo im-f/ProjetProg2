@@ -9,7 +9,7 @@ Au cours du projet, on nous a ete demande de completer cinq taches lesquelles se
 
 Voici ce qui a ete demande : 
 
-- Analyse statique de l'initialisation des places : \
+- ### Analyse statique de l'initialisation des places \
 Cette tache demandait de completer du code dans le fichier `uninitialized_places.ml`. Specifiquement, les fonctions `move_or_copy`, `foreach_root` et `foreach_succesor`. \
 Pour `move_or_copy`, on fait un analyse du type de la place donné en parametre. Pour savoir si on copie ou on bouge une place, il faut verifier que sont type soit _copy_. Si il l'est, rien ne change : on peut intialiser une place avec le meme contenue. Sinon, on est obligé de bouger le contenue et donc déinitialisé la place. \
 Les fonctions `foreach_root` et `foreach_succesor` ont ete largement inspiré par les fonctions du meme nom dans le fichier `active_borrows.ml`. `foreach_root` fait en sorte qu'on commence avec un _state_ ou toutes les variables sont pas initialisées. Une fois qu'on a ça, on peut procédé a l'analyse fait par `foreach_succesor`. Celui-ci, itere sur toutes les instructions du programme pour initialisé correctement les places qui doivent etre initalisés.  

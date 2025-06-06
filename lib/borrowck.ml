@@ -117,16 +117,19 @@ let compute_lft_sets prog mir : lifetime -> PpSet.t =
   List.iter (fun lft -> add_living (PpInCaller lft) lft) mir.mgeneric_lfts;
 
   Array.iteri 
-    (fun lbl (instr, _) -> 
-
+    (fun lbl (instr, loc) -> 
+      (* We make sure generic lifetimes are alive at all points of the program *)
       List.iter (fun lft -> add_living (PpLocal lbl) lft) mir.mgeneric_lfts;
 
+      (* Live locals at this point of the program *)
       let livelocinit = live_locals lbl in 
 
+      (* Function to verify if the lifetime has been freed or not at that point of the program *)
       let free_alive_lft typ lft = 
         let free_lft_typ = free_lfts typ in 
-        if LSet.mem lft free_lft_typ then 
+        if (LSet.mem lft free_lft_typ) then 
            add_living (PpLocal(lbl)) lft
+        else Error.error loc "Alive lifetime should be free" (* If it isnt, the contraint wasnt respected *)
       in
       match instr with 
       | Iassign (pl, _, _) | Icall (_, _, pl, _) -> 
@@ -238,7 +241,8 @@ let borrowck prog mir =
               | PpInCaller lft' -> 
                (match LMap.find_opt lft' mir.moutlives_graph with 
                 | Some lft_l -> 
-                  (if not (LSet.mem lft lft_l) then Error.error mir.mloc "test")
+                  (if not (LSet.mem lft lft_l) then 
+                    Error.error mir.mloc "Lifetime isnt alive long enough")
                 | None -> ()
                 )
               | _ -> ()
@@ -316,12 +320,15 @@ let borrowck prog mir =
         if consumes && contains_deref_borrow pl then
           Error.error loc "Moving a value out of a borrow."
       in
+      (* Check if writing in borrow is possible *)
       let check_write_use pl1 f = 
         if conflicting_borrow true pl1 then 
           Error.error loc "Cant write in borrow"
         else f ()
       in
       match instr with
+      (* We check each time if writing in a place is possible or not. 
+         If it is, we check that the use of the rest of the places associated is correct *)
       | Iassign (pl1, RVunop (_, pl), _) 
       | Iassign (pl1, RVplace(pl), _) -> check_write_use pl1 (fun () -> check_use pl)
       | Iassign (pl0, RVbinop (_, pl, pl1), _) -> 
@@ -331,8 +338,8 @@ let borrowck prog mir =
         check_write_use pl (fun () -> List.iter check_use pl_l )
       | Iassign (pl1, RVborrow (mut, pl), _) ->
         check_write_use pl1 (fun () -> if conflicting_borrow (mut = Mut) pl then
-                                          Error.error loc "There is a borrow conflicting this borrow.")
+                                          Error.error loc "There is a borrow conflicting with borrow.")
       | Iassign (pl, _, _) -> check_write_use pl (fun () -> ())
-      | _ -> () (*TODO: complete the other cases*)
+      | _ -> () 
     )
     mir.minstrs

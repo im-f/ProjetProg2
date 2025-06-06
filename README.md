@@ -20,10 +20,13 @@ Cette tache, qui se trouve au fichier `borrowck.ml`, est divisée en deux partie
 Pour les contraintes de survie, il est important de renforcer le fait que certaines _lifetimes_ doivent durer plus longtemps que d'autres. Un des cas d'intérêt peut nous servir comme exemple ici : l'égalisation de certaines _lifetimes_. Même si MiniRust n'implémente pas le sous-typage, si une variable avec une certaine _lifetime_ est stockée sous une place avec une _lifetime_ différente, ces deux doivent forcément avoir une durée identique. Cette contrainte et d'autres, ont été implémentés en intégrant les instructions du programme. Chaque fois qu'y a une instruction qui utilise une place, on s'intéresse globalement à une chose : si elle a un type qui utilise des _lifetimes_ (les emprunts et les structures). Si c'est le cas, on teste les choses nécessaires (plus d'information au sujet dans le code). \
 Pour les contraintes de vie, on s'intéresse à vérifier si une _lifetime_ est vivante ou pas lors d'un moment particulier du programme. Pour ceci, on itére à nouveau sur les instructions. À chaque itération, on associe toutes les lifetimes génériques au point du programme qui se trouve lors de cette instruction. Une fois qu'on a fait ça, il reste juste à vérifier que toutes les _lifetimes_ des variables locales vivantes n'ont pas encore expiré.
 
-- #### Quatrieme tache 
+- #### Verification des contraintes _outlives_ 
+Notre quatrième tâche se trouve également dans le fichier `borrowck.ml`. Elle consistait à compléter la fonction `borrowk` en faisant une vérification que les contraintes _outlives_ ont été correctement déclarés. \
+Pour cela, on itère sur les _lifetimes_ generiques de la fonction. À chaque fois, on reprend les _program points_ associés a les _lifetimes_ et on vérifie que tout est en ordre selon ce qui à été mis dans le graphe des contraintes de survie du programme.
 
-
-- #### Cinquieme tache 
+- #### Vérification de conflit d'emprunts
+La cinquième et dernière tâche de ce projet consistait à compléter du code se trouvant dans le fichier `borrowck.ml`. \
+Il s'agissait de vérifier qu'on utilise jamais un emprunt actif quand il est interdit de le faire. Le travail pour cette partie était plus faible mais est le plus important jusqu'à présent.
 
 ### Difficultées rencontrées
 

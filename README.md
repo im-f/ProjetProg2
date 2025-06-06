@@ -9,15 +9,15 @@ Au cours du projet, on nous a ete demande de completer cinq taches lesquelles se
 
 Voici ce qui a ete demande : 
 
-- Analyse statique de l'initialisation des places :<br \>
-Cette tache demandait de completer du code dans le fichier `uninitialized_places.ml`. Specifiquement, les fonctions `move_or_copy`, `foreach_root` et `foreach_succesor`. <br \>
-Pour `move_or_copy`, on fait un analyse du type de la place donné en parametre. Pour savoir si on copie ou on bouge une place, il faut verifier que sont type soit _copy_. Si il l'est, rien ne change : on peut intialiser une place avec le meme contenue. Sinon, on est obligé de bouger le contenue et donc déinitialisé la place. <br \>
+- Analyse statique de l'initialisation des places :<br\>
+Cette tache demandait de completer du code dans le fichier `uninitialized_places.ml`. Specifiquement, les fonctions `move_or_copy`, `foreach_root` et `foreach_succesor`. <br\>
+Pour `move_or_copy`, on fait un analyse du type de la place donné en parametre. Pour savoir si on copie ou on bouge une place, il faut verifier que sont type soit _copy_. Si il l'est, rien ne change : on peut intialiser une place avec le meme contenue. Sinon, on est obligé de bouger le contenue et donc déinitialisé la place. <br\>
 Les fonctions `foreach_root` et `foreach_succesor` ont ete largement inspiré par les fonctions du meme nom dans le fichier `active_borrows.ml`. `foreach_root` fait en sorte qu'on commence avec un _state_ ou toutes les variables sont pas initialisées. Une fois qu'on a ça, on peut procédé a l'analyse fait par `foreach_succesor`. Celui-ci, itere sur toutes les instructions du programme pour initialisé correctement les places qui doivent etre initalisés.  
-- Vérification d'emprunt partagés : <br \>
+- Vérification d'emprunt partagés : \
 Cette tache a lieu dans le fichier `borrowck.ml`. Elle nous demande de verifier a chaque fois que tout les emprunts partagés sont correctement fait. Pour ceci, on itere sur les instruction du programme pour trouver des endroits ou on pourrais avoir des possible conflits. Par example, lors de la création d'un emprunt. En rust, faire des modifications sur des emprunts partagés est impossible et cette tache fait en sorte qu'on respecte cette contrainte.
-- Création des contraintes sur les _lifetimes_ :<br \>
-Cette tache, qui ce trouve au fichier `borrowck.ml`, est divisé en deux partie : création des contraintes _outlives_ (les contraintes de survie) et les contraintes _living_ (les contraintes de vie). <br \>
-Pour les contraintes de survie, il est important de renforcer le fait que certaines _lifetimes_ doivent durer plus longtemps que d'autres. Un des cas d'interet peut nous servir comme example ici : l'egalisation de certaines _lifetimes_. Meme si MiniRust n'implemente pas le sous-typage, si une variable avec une certaine _lifetime_ est stocké sous une place avec une _lifetime_ differente, ces deux doivent forcement avoir une durée identique. Cette contrainte et autres, on été implementé en interant sur les instructions du programme. Chaque fois qu'y a une instruction qui utilise une place, on s'interese goblalment a une chose : si elle a un type qui utilise des _lifetimes_ (les emprunts et les structures). Si c'est le cas, on test les choses necessaires (plus d'information au sujet dans le code).<br \>
+- Création des contraintes sur les _lifetimes_ :<br\>
+Cette tache, qui ce trouve au fichier `borrowck.ml`, est divisé en deux partie : création des contraintes _outlives_ (les contraintes de survie) et les contraintes _living_ (les contraintes de vie). <br\>
+Pour les contraintes de survie, il est important de renforcer le fait que certaines _lifetimes_ doivent durer plus longtemps que d'autres. Un des cas d'interet peut nous servir comme example ici : l'egalisation de certaines _lifetimes_. Meme si MiniRust n'implemente pas le sous-typage, si une variable avec une certaine _lifetime_ est stocké sous une place avec une _lifetime_ differente, ces deux doivent forcement avoir une durée identique. Cette contrainte et autres, on été implementé en interant sur les instructions du programme. Chaque fois qu'y a une instruction qui utilise une place, on s'interese goblalment a une chose : si elle a un type qui utilise des _lifetimes_ (les emprunts et les structures). Si c'est le cas, on test les choses necessaires (plus d'information au sujet dans le code).<br\>
 Pour les contraintes de vie, 
 - Quatrieme tache : 
 - Cinquieme tache : 

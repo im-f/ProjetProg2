@@ -24,11 +24,11 @@ Pour les contraintes de vie,
 
 ### Difficultées rencontrées
 
-Tout au long, j'ai eu des difficultes a comprendre non seulement le sujet mais le code donné aussi. La troisieme tache en particulier, m'a paru specialement compliqué a comprendre. L'implementation des lifetimes n'ete pas extremement claire lors de ma lecture du code ce qui a rendu la tache beaucoup plus complique que necessaire. 
-Comprendre pourquoi certains tests ne passent pas ete une difficulté aussi. Lors de la lecture des tests et leur message d'erreur (ou manque de), trouver pourquoi le code que j'avais ecris n'etait pas suffisant, n'etait pas facile. C'est a cause de ça, que je rend ce projet avec plusieurs tests de base sans passer meme si je sort avec l'impression d'avoir compris comment marche un borrow checker. 
+Tout au long, j'ai eu des difficultes a comprendre non seulement le sujet mais le code donné aussi. La troisieme tache en particulier, m'a paru specialement compliqué a comprendre. L'implementation des lifetimes n'ete pas extremement claire lors de ma lecture du code ce qui a rendu la tache beaucoup plus complique que necessaire. \
+Comprendre pourquoi certains tests ne passent pas ete une difficulté aussi. Lors de la lecture des tests et leur message d'erreur (ou manque de), trouver pourquoi le code que j'avais ecris n'etait pas suffisant, n'etait pas facile. C'est a cause de ça, que je rend ce projet avec plusieurs tests de base sans passer meme si je sort avec l'impression d'avoir compris comment marche un borrow checker. \
 Je peux pas dire que j'ai trouvé une solution a ces problemes, vu que le projet n'est pas completement finis. Cependant, faire des recherches sur le fonctionnement d'un borrow checker et demander de l'aide a mes camarades, m'a aidé avancé jusqu'a ce point. 
 
 ## Conclusion
 
-Je peux pas dire que je suis totalement satisfaite avec le travail que je vous rend ici. Ce projet, qui est difficile de base, est devenue plus compliqué a cause d'une manque de temps produite par des circonstances exterieures, le debut d'un stage etant une d'elles. 
+Je peux pas dire que je suis totalement satisfaite avec le travail que je vous rend ici. Ce projet, qui est difficile de base, est devenue plus compliqué a cause d'une manque de temps produite par des circonstances exterieures, le debut d'un stage etant une d'elles. \
 Néanmoins, le theme du projet m'a parue extremement interessant et je ressort avec des connaissances que je contente d'avoir obtenue. 

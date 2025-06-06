@@ -28,7 +28,7 @@ Pour cela, on itère sur les _lifetimes_ generiques de la fonction. À chaque fo
 La cinquième et dernière tâche de ce projet consistait à compléter du code se trouvant dans le fichier `borrowck.ml`. \
 Il s'agissait de vérifier qu'on utilise jamais un emprunt actif quand il est interdit de le faire. Le travail pour cette partie était plus faible mais est le plus important jusqu'à présent.
 
-### Difficultées rencontrées
+### Difficultés rencontrés
 
 Tout au long, j'ai eu des difficultés à comprendre non seulement le sujet mais aussi le code donné. La troisième tâche en particulier, m'a paru specialement compliquée à comprendre. L'implémentation des lifetimes n'était pas extrêmement claire lors de ma lecture du code ce qui a rendu la tâche beaucoup plus compliqué que nécessaire. \
 Comprendre pourquoi certains tests ne passent pas était une difficulté aussi. Lors de la lecture des tests et leur message d'erreur (ou manque de), trouver pourquoi le code que j'avais écrit n'était pas suffisant, n'était pas facile. C'est a cause de ça, que je rend ce projet avec plusieurs tests de base sans passer même si je sort avec l'impression d'avoir compris comment marche un borrow checker. \
